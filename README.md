@@ -43,7 +43,7 @@
 執行：
 
 ```bash
-python app.py
+python app_gui.py
 ```
 
 啟動後會出現 GUI。
@@ -111,7 +111,7 @@ received_files/
 
 ```text
 專案資料夾/
-├── app.py
+├── app_gui.py
 ├── app_icon.ico
 └── received_files/
     ├── IMG_001.jpg
@@ -238,7 +238,7 @@ Pillow
 ```text
 雙向檔案傳輸助手/
 │
-├── app.py
+├── app_gui.py
 ├── app_icon.ico
 ├── requirements.txt
 ├── README.md
@@ -250,7 +250,7 @@ Pillow
 
 | 檔案 / 資料夾           | 用途             |
 | ------------------ | -------------- |
-| `app.py`           | 主程式            |
+| `app_gui.py`           | 主程式            |
 | `app_icon.ico`     | Windows GUI 圖示 |
 | `requirements.txt` | Python 套件清單    |
 | `README.md`        | 使用說明           |
@@ -329,20 +329,20 @@ pip install pyinstaller
 然後：
 
 ```bash
-pyinstaller --noconsole --onefile --icon=app_icon.ico app.py
+pyinstaller --noconsole --onefile --icon=app_icon.ico app_gui.py
 ```
 
 完成後：
 
 ```text
 dist/
-└── app.exe
+└── app_gui.exe
 ```
 
 即可取得：
 
 ```text
-app.exe
+app_gui.exe
 ```
 
 ---
@@ -361,7 +361,7 @@ UPLOAD_FOLDER = os.path.abspath('./received_files')
 
 ```text
 C:\MyApp\
-├── app.exe
+├── app_gui.exe
 └── received_files\
 ```
 
@@ -380,14 +380,14 @@ app_icon.ico
 請將它放在程式旁邊：
 
 ```text
-app.exe
+app_gui.exe
 app_icon.ico
 ```
 
 PyInstaller 打包時：
 
 ```bash
-pyinstaller --noconsole --onefile --icon=app_icon.ico app.py
+pyinstaller --noconsole --onefile --icon=app_icon.ico app_gui.py
 ```
 
 `--icon` 會將圖示設定為 EXE 的程式圖示。
