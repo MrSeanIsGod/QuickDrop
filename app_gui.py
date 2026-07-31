@@ -2,11 +2,11 @@ import os
 import socket
 import threading
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, filedialog, messagebox
 import subprocess
 import platform
 
-from flask import Flask, request, render_template_string
+from flask import Flask, request, render_template_string, send_from_directory
 from werkzeug.utils import secure_filename
 import qrcode
 from PIL import Image, ImageTk
@@ -25,32 +25,33 @@ HTML_TEMPLATE = '''
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iPhone 照片傳輸</title>
+    <title>雙向檔案傳輸助手</title>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            padding: 30px 20px; 
+            padding: 20px; 
             text-align: center; 
             background-color: #f2f2f7;
             color: #1c1c1e;
         }
         .card {
             background: white;
-            padding: 30px 20px;
+            padding: 24px 20px;
             border-radius: 16px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             max-width: 400px;
-            margin: 0 auto;
+            margin: 0 auto 20px auto;
         }
+        h2 { margin-top: 0; font-size: 20px; }
         .upload-btn { 
-            font-size: 18px; 
+            font-size: 16px; 
             font-weight: 600;
-            padding: 16px 32px; 
+            padding: 14px 24px; 
             background: #007aff; 
             color: white; 
             border: none; 
             border-radius: 12px; 
-            margin-top: 20px; 
+            margin-top: 10px; 
             cursor: pointer;
             width: 100%;
             box-sizing: border-box;
@@ -58,13 +59,13 @@ HTML_TEMPLATE = '''
         .upload-btn:disabled { background: #8e8e93; }
         
         .progress-container {
-            margin-top: 25px;
+            margin-top: 20px;
             display: none;
         }
         .progress-bar-bg {
             background-color: #e5e5ea;
             border-radius: 8px;
-            height: 12px;
+            height: 10px;
             width: 100%;
             overflow: hidden;
         }
@@ -75,17 +76,57 @@ HTML_TEMPLATE = '''
             transition: width 0.2s ease;
         }
         #status {
-            margin-top: 12px;
-            font-size: 15px;
+            margin-top: 10px;
+            font-size: 14px;
             color: #3a3a3c;
             word-break: break-word;
+        }
+        .file-list {
+            text-align: left;
+            margin-top: 15px;
+            list-style: none;
+            padding: 0;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e5ea;
+        }
+        .file-name {
+            font-size: 14px;
+            color: #1c1c1e;
+            word-break: break-all;
+            padding-right: 10px;
+        }
+        .download-link {
+            background: #34c759;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .refresh-btn {
+            background: transparent;
+            border: none;
+            color: #007aff;
+            font-size: 14px;
+            cursor: pointer;
+            float: right;
         }
     </style>
 </head>
 <body>
+    <!-- 上傳至電腦區塊 -->
     <div class="card">
-        <h2>照片 / 影片無線傳輸</h2>
-        <p style="color:#8e8e93; font-size:14px;">請保持螢幕開啟，傳輸完成前請勿離開網頁</p>
+        <h2>傳送檔案給電腦</h2>
+        <p style="color:#8e8e93; font-size:13px; margin-bottom:15px;">點擊下方按鈕選擇照片或影片</p>
         
         <input type="file" id="fileInput" multiple accept="image/*,video/*" style="display:none;">
         <button type="button" class="upload-btn" id="selectBtn" onclick="document.getElementById('fileInput').click()">選取照片與影片</button>
@@ -98,8 +139,21 @@ HTML_TEMPLATE = '''
         </div>
     </div>
 
+    <!-- 從電腦下載區塊 -->
+    <div class="card">
+        <div style="overflow: hidden; margin-bottom: 10px;">
+            <span style="font-weight: bold; font-size: 18px; float: left;">電腦上的檔案</span>
+            <button class="refresh-btn" onclick="loadFileList()">重新整理</button>
+        </div>
+        <ul class="file-list" id="fileList">
+            <li style="color:#8e8e93; text-align:center;">載入中...</li>
+        </ul>
+    </div>
+
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        loadFileList();
+
         const fileInput = document.getElementById('fileInput');
         const selectBtn = document.getElementById('selectBtn');
         const progressContainer = document.getElementById('progressContainer');
@@ -136,6 +190,7 @@ HTML_TEMPLATE = '''
                 if (xhr.status === 200) {
                     progressBar.style.width = '100%';
                     status.innerHTML = `<span style="color:#34c759; font-weight:bold;">🎉 成功傳輸 ${files.length} 個檔案！</span>`;
+                    loadFileList(); // 上傳成功後順便更新檔案清單
                 } else {
                     status.innerHTML = `<span style="color:#ff3b30;">❌ 上傳失敗 (錯誤碼 ${xhr.status})</span>`;
                 }
@@ -151,6 +206,32 @@ HTML_TEMPLATE = '''
             xhr.send(formData);
         });
     });
+
+    // 取得電腦共享資料夾中的檔案清單
+    function loadFileList() {
+        fetch('/files')
+            .then(res => res.json())
+            .then(data => {
+                const listEl = document.getElementById('fileList');
+                listEl.innerHTML = '';
+                if (data.length === 0) {
+                    listEl.innerHTML = '<li style="color:#8e8e93; text-align:center; padding: 10px;">目前電腦資料夾無檔案</li>';
+                    return;
+                }
+                data.forEach(filename => {
+                    const li = document.createElement('li');
+                    li.className = 'file-item';
+                    li.innerHTML = `
+                        <span class="file-name">${filename}</span>
+                        <a href="/download/${encodeURIComponent(filename)}" class="download-link" download>下載</a>
+                    `;
+                    listEl.appendChild(li);
+                });
+            })
+            .catch(err => {
+                console.error(err);
+            });
+    }
     </script>
 </body>
 </html>
@@ -160,6 +241,7 @@ HTML_TEMPLATE = '''
 def index():
     return render_template_string(HTML_TEMPLATE)
 
+# 上傳檔案至電腦
 @app.route('/upload', methods=['POST'])
 def upload_file():
     uploaded_files = request.files.getlist('files')
@@ -174,6 +256,24 @@ def upload_file():
             if gui_log_callback:
                 gui_log_callback(f"收到檔案: {filename}")
     return f"OK: {saved_count}", 200
+
+# 獲取電腦上的檔案清單 API
+@app.route('/files', methods=['GET'])
+def list_files():
+    try:
+        files = os.listdir(UPLOAD_FOLDER)
+        # 過濾掉隱藏檔案
+        files = [f for f in files if not f.startswith('.')]
+        return files
+    except Exception as e:
+        return [], 500
+
+# 下載檔案至手機 API
+@app.route('/download/<filename>')
+def download_file(filename):
+    if gui_log_callback:
+        gui_log_callback(f"手機下載了檔案: {filename}")
+    return send_from_directory(UPLOAD_FOLDER, filename, as_attachment=True)
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -201,19 +301,16 @@ class AppGUI:
         self.root = root
         self.url = url
         
-        self.root.title("iPhone 照片傳輸助手")
-        self.root.geometry("400x580")
+        self.root.title("雙向檔案傳輸助手")
+        self.root.geometry("420x620")
         self.root.resizable(False, False)
 
-        # 加上這行：設置 GUI 視窗標題列圖示
         if os.path.exists("app_icon.ico"):
             self.root.iconbitmap("app_icon.ico")
         
-        # 標題
-        title_label = tk.Label(root, text="iPhone 照片傳輸助手", font=("Arial", 16, "bold"))
-        title_label.pack(pady=10)
+        title_label = tk.Label(root, text="雙向檔案傳輸助手", font=("Arial", 16, "bold"))
+        title_label.pack(pady=8)
 
-        # 網址顯示
         url_label = tk.Label(root, text=f"網址: {self.url}", font=("Arial", 11), fg="#007aff")
         url_label.pack(pady=2)
 
@@ -222,23 +319,35 @@ class AppGUI:
 
         # 生成並顯示 QR Code
         qr_img = qrcode.make(self.url)
-        qr_img = qr_img.resize((220, 220))
+        qr_img = qr_img.resize((200, 200))
         self.qr_photo = ImageTk.PhotoImage(qr_img)
         
         qr_label = tk.Label(root, image=self.qr_photo)
-        qr_label.pack(pady=10)
+        qr_label.pack(pady=5)
+
+        # 按鈕容器（橫向放置）
+        btn_frame = tk.Frame(root)
+        btn_frame.pack(pady=8)
 
         # 開啟資料夾按鈕
         open_btn = tk.Button(
-            root, text="📁 開啟接收資料夾", font=("Arial", 11, "bold"),
-            bg="#34c759", fg="white", relief="flat", padx=10, pady=5,
+            btn_frame, text="📁 開啟資料夾", font=("Arial", 10, "bold"),
+            bg="#34c759", fg="white", relief="flat", padx=8, pady=4,
             command=open_folder
         )
-        open_btn.pack(pady=10)
+        open_btn.pack(side="left", padx=5)
+
+        # 新增：從電腦挑選檔案放入共享區
+        add_file_btn = tk.Button(
+            btn_frame, text="➕ 傳送檔案至手機", font=("Arial", 10, "bold"),
+            bg="#007aff", fg="white", relief="flat", padx=8, pady=4,
+            command=self.add_files_from_pc
+        )
+        add_file_btn.pack(side="left", padx=5)
 
         # 即時日誌訊息框
         log_frame = tk.LabelFrame(root, text="傳輸日誌", font=("Arial", 10))
-        log_frame.pack(fill="both", expand=True, padx=15, pady=10)
+        log_frame.pack(fill="both", expand=True, padx=15, pady=8)
 
         self.log_list = tk.Listbox(log_frame, font=("Arial", 9), borderwidth=0)
         self.log_list.pack(fill="both", expand=True, side="left")
@@ -247,7 +356,6 @@ class AppGUI:
         scrollbar.pack(side="right", fill="y")
         self.log_list.config(yscrollcommand=scrollbar.set)
 
-        # 註冊 log 回調
         global gui_log_callback
         gui_log_callback = self.add_log
 
@@ -255,8 +363,19 @@ class AppGUI:
         self.log_list.insert(tk.END, message)
         self.log_list.see(tk.END)
 
+    def add_files_from_pc(self):
+        """讓使用者選擇電腦上的檔案，直接複製到共享資料夾"""
+        files = filedialog.askopenfilenames(title="選擇要傳送至手機的檔案")
+        if files:
+            import shutil
+            for fpath in files:
+                fname = os.path.basename(fpath)
+                dest = os.path.join(UPLOAD_FOLDER, fname)
+                shutil.copy(fpath, dest)
+                self.add_log(f"已新增分享檔案: {fname}")
+            messagebox.showinfo("成功", f"已準備 {len(files)} 個檔案，手機重新整理頁面即可下載！")
+
 def run_flask(ip, port):
-    # 關閉 Flask 的 console 訊息，讓畫面乾淨
     import logging
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
@@ -267,11 +386,9 @@ if __name__ == '__main__':
     port = 5000
     url = f"http://{ip}:{port}"
 
-    # 在背景執行線程啟動 Flask
     server_thread = threading.Thread(target=run_flask, args=(ip, port), daemon=True)
     server_thread.start()
 
-    # 啟動 Tkinter GUI
     root = tk.Tk()
     gui = AppGUI(root, url)
     root.mainloop()
