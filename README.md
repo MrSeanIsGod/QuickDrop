@@ -1,8 +1,10 @@
 # 📱 雙向檔案傳輸助手
 
-一個使用 **Python + Flask + Tkinter** 製作的區域網路雙向檔案傳輸工具。
+一款使用 **Python + Flask + Tkinter** 製作的區域網路雙向檔案傳輸工具。
 
-不需要 USB 線、不需要雲端、不需要登入帳號，只要 **電腦與 iPhone 連接同一個 Wi-Fi 網路**，即可透過手機瀏覽器與電腦互傳照片、影片及其他檔案。
+不需要 USB 線、不需要雲端硬碟，只要**電腦與 iPhone 連接同一個 Wi-Fi**，即可透過 QR Code 開啟網頁，在 iPhone 與電腦之間互傳檔案。
+
+本專案支援使用 **PyInstaller 打包成單一 `.exe`**，提供給其他 Windows 使用者直接執行。
 
 ---
 
@@ -12,130 +14,223 @@
 
 * 使用 iPhone 相機掃描 QR Code
 * 自動開啟檔案傳輸網頁
-* 可一次選擇多個照片或影片
-* 顯示即時上傳進度
+* 一次選擇多個照片或影片
+* 即時顯示上傳進度
 * 顯示目前傳輸容量
-* 檔案自動儲存至電腦共享資料夾
-* 支援最大單次請求 **1GB**
+* 上傳完成後自動更新檔案列表
+* 單次 HTTP Request 最大支援 **1GB**
+* 檔案名稱重複時自動重新命名，不會覆蓋原檔
 
 ### 💻 電腦 → iPhone
 
-* 電腦端可選擇檔案加入共享資料夾
-* iPhone 開啟網頁即可看到檔案列表
-* 點擊「下載」即可將檔案下載到手機
-* 支援照片、影片及一般檔案
+* 電腦端點擊「傳送檔案至手機」
+* 選擇電腦中的檔案
+* 檔案自動加入共享資料夾
+* iPhone 重新整理網頁即可看到檔案
+* 點擊「下載」即可下載到 iPhone
 
 ### 🖥️ 電腦 GUI
 
-* 顯示目前區域網路網址
+* 自動取得區域網路 IP
+* 自動尋找可使用的 Port
 * 自動產生 QR Code
+* 顯示目前連線網址
 * 一鍵開啟共享資料夾
 * 一鍵選擇檔案傳送至手機
 * 即時顯示傳輸日誌
-* 支援 Windows、macOS、Linux
+* 顯示實際檔案儲存位置
+* 支援 PyInstaller 打包成單一 EXE
 
 ---
 
-## 🖼️ 使用方式
+# 📋 系統需求
 
-### 1. 啟動程式
+## 開發環境
 
-執行：
+如果要自行修改或打包程式：
 
-```bash
-python app_gui.py
-```
+* Windows 10 / 11
+* Python 3.10+
+* PyInstaller
 
-啟動後會出現 GUI。
-
-程式會自動取得電腦在區域網路上的 IP，例如：
+需要的 Python 套件：
 
 ```text
-網址: http://192.168.1.100:5000
+Flask
+Werkzeug
+qrcode
+Pillow
 ```
-
-同時會產生 QR Code。
 
 ---
 
-### 2. 電腦與 iPhone 連接同一個 Wi-Fi
+## 使用 EXE
 
-這是最重要的條件。
+如果只是使用已經打包好的：
+
+```text
+app.exe
+```
+
+則**不需要安裝 Python**。
+
+使用者不需要另外安裝：
+
+```text
+❌ Python
+❌ Flask
+❌ Werkzeug
+❌ qrcode
+❌ Pillow
+❌ PyInstaller
+```
+
+只需要執行：
+
+```text
+app.exe
+```
+
+即可。
+
+---
+
+# 📦 安裝開發環境
+
+如果要從原始碼執行：
+
+```bash
+pip install -r requirements.txt
+```
+
+或直接：
+
+```bash
+pip install Flask Werkzeug qrcode Pillow
+```
+
+---
+
+# 📁 專案結構
+
+開發時建議：
+
+```text
+雙向檔案傳輸助手/
+│
+├── app.py
+├── app_icon.ico
+├── requirements.txt
+└── README.md
+```
+
+其中：
+
+| 檔案                 | 用途           |
+| ------------------ | ------------ |
+| `app.py`           | 主程式          |
+| `app_icon.ico`     | EXE 與 GUI 圖示 |
+| `requirements.txt` | Python 套件清單  |
+| `README.md`        | 專案說明         |
+
+**不需要自行建立 `received_files`。**
+
+程式第一次執行時會自動建立。
+
+---
+
+# 🚀 執行程式
+
+如果使用 Python 執行：
+
+```bash
+python app.py
+```
+
+啟動後會看到類似：
+
+```text
+雙向檔案傳輸助手
+
+網址: http://192.168.1.100:5000
+
+請確認手機與電腦連接同一個 Wi-Fi
+再使用 iPhone 鏡頭掃描下方 QR Code
+```
+
+程式會自動產生 QR Code。
+
+---
+
+# 📱 使用方式
+
+## 1. 電腦與 iPhone 連接同一個 Wi-Fi
 
 例如：
 
 ```text
 電腦
 192.168.1.100
-      │
-      │ Wi-Fi
-      │
+       │
+       │ Wi-Fi
+       │
 iPhone
-192.168.1.105
+192.168.1.101
 ```
 
-兩台裝置必須位於可以互相連線的同一個區域網路。
+兩台裝置需要位於可以互相連線的同一個區域網路。
 
 ---
 
-### 3. iPhone 掃描 QR Code
+## 2. iPhone 掃描 QR Code
 
-使用 iPhone 相機掃描程式中的 QR Code。
+開啟 iPhone 相機，掃描電腦程式中的 QR Code。
 
-掃描後會出現：
+掃描後會進入：
 
 ```text
 雙向檔案傳輸助手
 ```
 
-的網頁。
+網頁。
 
 ---
 
-## 📤 iPhone 傳檔案到電腦
+# 📤 iPhone → 電腦
 
 在 iPhone 網頁中：
 
 1. 點擊「選取照片與影片」
-2. 選擇要傳送的照片或影片
-3. 等待傳輸完成
-4. 電腦端會自動收到檔案
+2. 選擇照片或影片
+3. 等待傳輸
+4. 傳輸完成後，檔案會儲存到電腦
 
-檔案會儲存在：
+網頁會顯示：
 
 ```text
-received_files/
+已傳輸 50%
+(125.0 MB / 250.0 MB)
 ```
 
-例如：
+完成後：
 
 ```text
-專案資料夾/
-├── app_gui.py
-├── app_icon.ico
-└── received_files/
-    ├── IMG_001.jpg
-    ├── IMG_002.jpg
-    └── video.mp4
+🎉 成功傳輸 3 個檔案！
 ```
 
 ---
 
-## 📥 電腦傳檔案到 iPhone
+# 📥 電腦 → iPhone
 
-在電腦 GUI 點擊：
+在電腦 GUI 中點擊：
 
 ```text
 ➕ 傳送檔案至手機
 ```
 
-選擇要傳送的檔案。
+選擇檔案。
 
-程式會將檔案複製到：
-
-```text
-received_files/
-```
+程式會將檔案加入共享資料夾。
 
 接著在 iPhone 網頁點擊：
 
@@ -155,141 +250,241 @@ received_files/
 
 ---
 
-## 📁 開啟共享資料夾
+# 📁 檔案儲存位置
 
-點擊 GUI 中的：
+為了讓單一 EXE 可以安全使用，本程式**不會將檔案儲存在 EXE 所在資料夾**。
+
+Windows 使用者的檔案會儲存在：
+
+```text
+C:\Users\使用者\AppData\Roaming\雙向檔案傳輸助手\received_files
+```
+
+例如：
+
+```text
+C:\Users\User\AppData\Roaming\雙向檔案傳輸助手\received_files
+```
+
+程式會自動建立資料夾。
+
+---
+
+## 📂 開啟檔案資料夾
+
+在 GUI 中點擊：
 
 ```text
 📁 開啟資料夾
 ```
 
-即可直接開啟：
-
-```text
-received_files/
-```
-
-方便管理已傳輸的檔案。
+即可直接開啟實際的 `received_files` 資料夾。
 
 ---
 
-## 📊 傳輸進度
+# 🔄 重複檔案處理
 
-iPhone 上傳檔案時會顯示：
+如果傳入相同檔名，程式不會直接覆蓋。
 
-```text
-已傳輸 45%
-(120.5 MB / 260.3 MB)
-```
-
-完成後會顯示：
+例如第一次傳送：
 
 ```text
-🎉 成功傳輸 3 個檔案！
+IMG_001.jpg
 ```
+
+第二次：
+
+```text
+IMG_001 (1).jpg
+```
+
+第三次：
+
+```text
+IMG_001 (2).jpg
+```
+
+以此類推。
 
 ---
 
-# 🛠️ 安裝
+# 🌐 Port
 
-## Python 版本
-
-建議：
+程式預設從：
 
 ```text
-Python 3.10+
+5000
 ```
+
+開始尋找可用 Port。
+
+如果 `5000` 已經被其他程式使用，程式會自動嘗試：
+
+```text
+5001
+5002
+5003
+...
+```
+
+例如：
+
+```text
+http://192.168.1.100:5001
+```
+
+因此通常不需要手動修改 Port。
 
 ---
 
-## 安裝套件
+# 📦 PyInstaller 打包 EXE
 
-使用：
+如果希望將程式提供給其他 Windows 使用者使用，可以使用 PyInstaller。
+
+## 1. 安裝 PyInstaller
 
 ```bash
-pip install -r requirements.txt
+pip install pyinstaller
 ```
 
-如果沒有 `requirements.txt`，可以直接安裝：
+---
+
+## 2. 執行打包
+
+在 `app.py` 所在的資料夾開啟 CMD：
 
 ```bash
-pip install flask werkzeug qrcode pillow
+pyinstaller --noconsole --onefile --icon=app_icon.ico --add-data "app_icon.ico;." app.py
 ```
 
 ---
 
-## 📦 requirements.txt
+## 3. 打包完成
 
-建議內容：
-
-```text
-Flask
-Werkzeug
-qrcode
-Pillow
-```
-
----
-
-# 📂 專案結構
-
-建議：
+完成後會產生：
 
 ```text
 雙向檔案傳輸助手/
 │
-├── app_gui.py
-├── app_icon.ico
-├── requirements.txt
-├── README.md
+├── build/
 │
-└── received_files/
+├── dist/
+│   └── app.exe
+│
+├── app.spec
+├── app.py
+├── app_icon.ico
+└── requirements.txt
 ```
 
-其中：
+真正需要提供給使用者的只有：
 
-| 檔案 / 資料夾           | 用途             |
-| ------------------ | -------------- |
-| `app_gui.py`           | 主程式            |
-| `app_icon.ico`     | Windows GUI 圖示 |
-| `requirements.txt` | Python 套件清單    |
-| `README.md`        | 使用說明           |
-| `received_files/`  | 檔案共享資料夾        |
-
-`received_files/` 如果不存在，程式會自動建立。
+```text
+dist\app.exe
+```
 
 ---
 
-# 🔐 安全性注意事項
+# 🎯 給其他使用者
 
-本程式目前是設計給 **區域網路內使用**。
+打包完成後，可以直接將：
 
-程式啟動 Flask：
-
-```python
-app.run(host='0.0.0.0', port=5000)
+```text
+app.exe
 ```
 
-代表區域網路內其他可以連線到電腦的裝置，都可能存取這個網站。
+複製給其他人。
 
-### ⚠️ 請注意
+對方不需要：
 
-目前程式：
+```text
+❌ Python
+❌ pip
+❌ requirements.txt
+❌ app_icon.ico
+❌ Flask
+❌ Pillow
+❌ qrcode
+❌ 原始碼
+❌ received_files
+```
 
-* 沒有帳號密碼
-* 沒有登入驗證
-* 沒有 HTTPS
-* 沒有檔案存取權限管理
-* 沒有限制特定裝置
-* 沒有病毒掃描
+只需要：
 
-因此 **不要直接將這個程式暴露到 Internet**。
+```text
+app.exe
+```
+
+雙擊即可使用。
+
+---
+
+# 🛡️ Windows 防火牆
+
+第一次執行 EXE 時，Windows 可能會出現：
+
+```text
+Windows Defender 防火牆
+```
+
+詢問是否允許程式進行網路通訊。
+
+如果需要讓 iPhone 連線，請允許：
+
+```text
+☑ 私人網路
+```
+
+建議：
+
+```text
+☐ 公用網路
+```
+
+不要在不信任的公共 Wi-Fi 環境中開啟檔案分享服務。
+
+---
+
+# ⚠️ 網路使用限制
+
+本程式是設計給**區域網路使用**。
+
+程式會啟動：
+
+```text
+Flask Web Server
+```
+
+並監聽：
+
+```text
+0.0.0.0
+```
+
+因此，同一個區域網路中可以連線到電腦的裝置，可能可以存取檔案傳輸頁面。
+
+---
+
+## 🔐 目前沒有登入驗證
+
+目前版本沒有：
+
+* 帳號密碼
+* PIN 驗證
+* Token
+* HTTPS
+* 使用者權限管理
+* 裝置白名單
+
+因此：
+
+> **不要將此程式直接暴露到 Internet。**
 
 建議只在：
 
 ```text
-家用 Wi-Fi
 私人 Wi-Fi
+家用網路
 可信任的區域網路
 ```
 
@@ -297,128 +492,52 @@ app.run(host='0.0.0.0', port=5000)
 
 ---
 
-# 🧱 Windows 防火牆
+# 📊 檔案限制
 
-第一次啟動 Flask 時，Windows 可能會跳出：
-
-```text
-Windows Defender 防火牆
-```
-
-如果要讓 iPhone 連線，需要允許 Python 通過私人網路。
-
-建議：
-
-```text
-☑ 私人網路
-☐ 公用網路
-```
-
-不要在不信任的公共 Wi-Fi 上開啟檔案分享服務。
-
----
-
-# 📦 PyInstaller 打包 EXE
-
-如果想把程式打包成 Windows `.exe`，可以使用：
-
-```bash
-pip install pyinstaller
-```
-
-然後：
-
-```bash
-pyinstaller --noconsole --onefile --icon=app_icon.ico app_gui.py
-```
-
-完成後：
-
-```text
-dist/
-└── app_gui.exe
-```
-
-即可取得：
-
-```text
-app_gui.exe
-```
-
----
-
-## ⚠️ 打包後的檔案位置
-
-目前程式使用：
+目前設定：
 
 ```python
-UPLOAD_FOLDER = os.path.abspath('./received_files')
+app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 1024
 ```
 
-所以 `received_files` 會依照程式目前的工作目錄建立。
-
-例如：
+代表單次 HTTP Request 最大約：
 
 ```text
-C:\MyApp\
-├── app_gui.exe
-└── received_files\
+1GB
 ```
 
-建議將 EXE 放在獨立資料夾中執行。
-
----
-
-# 🖼️ GUI Icon
-
-如果要使用：
-
-```text
-app_icon.ico
-```
-
-請將它放在程式旁邊：
-
-```text
-app_gui.exe
-app_icon.ico
-```
-
-PyInstaller 打包時：
-
-```bash
-pyinstaller --noconsole --onefile --icon=app_icon.ico app_gui.py
-```
-
-`--icon` 會將圖示設定為 EXE 的程式圖示。
+如果一次選擇多個檔案，則整個 Request 的總大小不能超過約 1GB。
 
 ---
 
 # 🧰 技術架構
 
-本專案主要使用：
+## Python
 
-### Python
+負責主要程式邏輯。
 
-負責整個程式邏輯。
+---
 
-### Tkinter
+## Tkinter
 
-負責建立電腦端 GUI。
+負責建立 Windows GUI。
 
 包含：
 
 * QR Code
 * 網址
 * 開啟資料夾
-* 檔案選擇
+* 傳送檔案
 * 傳輸日誌
+* 儲存位置
 
-### Flask
+---
 
-建立區域網路 Web Server。
+## Flask
 
-主要 API：
+負責建立區域網路 Web Server。
+
+主要路由：
 
 ```text
 GET  /
@@ -427,53 +546,80 @@ GET  /files
 GET  /download/<filename>
 ```
 
-### QR Code
+---
 
-使用：
+## QRCode
 
-```python
-qrcode
+使用 `qrcode` 套件產生 QR Code。
+
+QR Code 內容為：
+
+```text
+http://電腦IP:Port
 ```
 
-將區域網路網址轉換成 QR Code。
+例如：
 
-### Pillow
-
-使用：
-
-```python
-PIL
+```text
+http://192.168.1.100:5000
 ```
-
-將 QR Code 顯示在 Tkinter GUI。
 
 ---
 
-# 🌐 Web API
+## Pillow
 
-## GET `/`
+使用 Pillow 將 QR Code 顯示於 Tkinter GUI。
+
+---
+
+## PyInstaller
+
+負責將：
+
+```text
+Python
++ Flask
++ Pillow
++ qrcode
++ 其他依賴
++ app_icon.ico
+```
+
+打包成：
+
+```text
+app.exe
+```
+
+---
+
+# 🔌 API
+
+## `GET /`
 
 開啟檔案傳輸網頁。
 
 ---
 
-## POST `/upload`
+## `POST /upload`
 
-接收手機上傳的檔案。
+接收 iPhone 上傳的檔案。
 
-支援多檔案：
+參數：
 
 ```text
 files
 ```
 
+支援多檔案上傳。
+
 ---
 
-## GET `/files`
+## `GET /files`
 
-取得共享資料夾中的檔案列表。
+取得目前共享資料夾中的檔案。
 
-回傳 JSON：
+回傳 JSON，例如：
 
 ```json
 [
@@ -485,7 +631,7 @@ files
 
 ---
 
-## GET `/download/<filename>`
+## `GET /download/<filename>`
 
 下載指定檔案。
 
@@ -497,103 +643,162 @@ files
 
 ---
 
-# ⚙️ 目前限制
+# 🧹 清理檔案
 
-目前版本有以下限制：
+程式目前不會自動刪除檔案。
 
-### 1. 最大請求大小 1GB
-
-程式設定：
-
-```python
-app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024
-```
-
-因此一次 HTTP Request 最大約為：
+如果不再需要某些照片或影片，可以直接從：
 
 ```text
-1GB
+received_files
+```
+
+資料夾刪除。
+
+也可以使用 GUI：
+
+```text
+📁 開啟資料夾
+```
+
+直接管理。
+
+---
+
+# 🔧 常見問題
+
+## Q1：iPhone 掃 QR Code 後無法開啟？
+
+確認：
+
+1. 電腦與 iPhone 是否連接同一個 Wi-Fi
+2. Windows 防火牆是否允許私人網路
+3. 電腦是否正在執行 EXE
+4. GUI 顯示的 IP 是否正確
+
+例如：
+
+```text
+http://192.168.1.100:5000
+```
+
+可以直接在 iPhone Safari 手動輸入測試。
+
+---
+
+## Q2：為什麼 QR Code 可以掃描，但網頁打不開？
+
+通常是 Windows 防火牆阻擋。
+
+請確認 Python / EXE 的網路存取權限，並允許：
+
+```text
+私人網路
 ```
 
 ---
 
-### 2. 檔名可能重複
+## Q3：可以只給朋友一個 EXE 嗎？
 
-如果傳入相同檔名：
+可以。
 
-```text
-IMG_001.jpg
+PyInstaller 使用：
+
+```bash
+pyinstaller --noconsole --onefile --icon=app_icon.ico --add-data "app_icon.ico;." app.py
 ```
 
-新的檔案可能會覆蓋舊檔案。
-
----
-
-### 3. 沒有傳輸速度顯示
-
-目前只顯示：
+打包後，只需要提供：
 
 ```text
-已傳輸 XX%
-```
-
-尚未顯示：
-
-```text
-MB/s
-剩餘時間
+app.exe
 ```
 
 ---
 
-### 4. 沒有檔案刪除功能
+## Q4：需要把 `received_files` 一起給對方嗎？
 
-目前手機只能：
+不需要。
+
+程式第一次啟動時會自動建立：
 
 ```text
-查看
-下載
+AppData\Roaming\雙向檔案傳輸助手\received_files
 ```
-
-不能直接從網頁刪除電腦檔案。
 
 ---
 
-# 🚀 未來可以加入的功能
+## Q5：需要把 `app_icon.ico` 給對方嗎？
 
-如果要繼續升級，可以加入：
+不需要。
 
-* 🔒 PIN / 密碼驗證
-* 📱 指定裝置才能連線
+`app_icon.ico` 已經透過：
+
+```text
+--add-data "app_icon.ico;."
+```
+
+打包進 EXE。
+
+---
+
+## Q6：重新下載 EXE 後，之前的檔案會消失嗎？
+
+不會。
+
+檔案儲存在 Windows 使用者的 AppData：
+
+```text
+AppData\Roaming\雙向檔案傳輸助手\received_files
+```
+
+而不是 EXE 裡面。
+
+所以即使：
+
+```text
+刪除舊 EXE
+↓
+下載新 EXE
+↓
+重新執行
+```
+
+原本的檔案仍然存在。
+
+---
+
+# 🚀 未來可以加入
+
+未來可以考慮加入：
+
+* 🔐 PIN / 密碼驗證
+* 🔑 Token 驗證
+* 📱 裝置連線授權
 * 📊 即時傳輸速度
-* ⏱️ 剩餘時間
-* 📂 建立資料夾
+* ⏱️ 剩餘傳輸時間
+* 📈 傳輸進度
 * 🗑️ 手機刪除電腦檔案
 * 🖼️ 照片縮圖預覽
 * 🎬 影片預覽
-* 📦 拖曳檔案上傳
+* 📂 資料夾管理
+* 🔍 檔案搜尋
 * 📑 檔案分類
-* 🔍 搜尋檔案
-* 📝 自訂下載檔案名稱
-* 🔄 自動重新整理檔案列表
-* 📡 自動偵測區域網路 IP
-* 🌐 HTTPS
-* 🔐 使用 Token 驗證
-* 📦 PyInstaller 一鍵打包
-* 💾 自訂接收資料夾
+* 📡 更精準的網路介面選擇
+* 🔒 HTTPS
+* 📦 EXE 自動更新
+* 🧹 自動清理舊檔案
 * 📈 傳輸歷史紀錄
 
 ---
 
-# 📝 License
+# 📄 License
 
 此專案可自由修改與使用。
 
-如有需要，可以依照自己的需求修改程式功能與介面。
-
 ---
 
-# 👨‍💻 開發環境
+# 👨‍💻 開發技術
 
 ```text
 Python
@@ -604,11 +809,30 @@ Pillow
 PyInstaller
 ```
 
-適合用於：
+---
 
-* iPhone ↔ Windows 檔案傳輸
-* iPhone 照片備份
-* iPhone 影片傳輸
-* 區域網路檔案分享
-* 個人區域網路傳檔工具
-* Python Flask GUI 專案
+## ⭐ 快速開始
+
+### 開發者
+
+```bash
+pip install -r requirements.txt
+
+pyinstaller --noconsole --onefile --icon=app_icon.ico --add-data "app_icon.ico;." app.py
+```
+
+### 使用者
+
+只需要：
+
+```text
+雙擊 app.exe
+        ↓
+確認電腦與 iPhone 使用同一個 Wi-Fi
+        ↓
+iPhone 掃描 QR Code
+        ↓
+開始雙向傳輸檔案
+```
+
+**一個 EXE，即可使用。**
